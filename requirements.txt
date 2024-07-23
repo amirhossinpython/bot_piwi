@@ -1,0 +1,6 @@
+rubpy
+aiosqlite
+requests
+qrcode
+pillow
+

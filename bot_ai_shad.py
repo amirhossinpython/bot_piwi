@@ -43,7 +43,7 @@ try:
 except ImportError :
     install("pillow")
 
-ADMIN_GUID = 'u0BjRwS098d4a4504b730b1f2d923fa9'  # شناسه چت ادمین
+ADMIN_GUID = 'guid'  # شناسه چت ادمین
 def read_bad_words(file_path):
     with open(file_path, "r", encoding="utf-8") as file:  # تغییر کدگذاری به utf-8
         words = [line.strip() for line in file if line.strip()]

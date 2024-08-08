@@ -6,6 +6,7 @@ import sys
 from io import BytesIO
 import shutil
 import re
+from time import strftime
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
@@ -29,7 +30,7 @@ try:
 except ImportError:
     install('rubpy')
     import rubpy
-    from rubpy import Client, filters, utils
+    from rubpy import Client, filters, utils, exceptions
     from rubpy.types import Updates
 
 try:
@@ -43,7 +44,23 @@ try:
 except ImportError :
     install("pillow")
 
-ADMIN_GUID = 'u0Guh3f0531236db71d8fd20e938bc5a'  # شناسه چت ادمین
+try:
+    from gtts import gTTS
+except ImportError:
+    install("gtts")
+    from gtts import gTTS
+try :
+    
+    from deep_translator import GoogleTranslator
+except ImportError :
+    install("deep_translator")
+    from deep_translator import GoogleTranslator
+
+
+    
+    
+ADMIN_GUID = 'u0Guh3f0531236db71d8fd20e938bc5a'  
+# شناسه چت ادمین
 def read_bad_words(file_path):
     with open(file_path, "r", encoding="utf-8") as file:  # تغییر کدگذاری به utf-8
         words = [line.strip() for line in file if line.strip()]
@@ -73,6 +90,8 @@ def contains_prohibited_word(text, patterns):
         if pattern.search(text):
             return True
     return False
+
+
 
 list_order="""
 ### لیست خدمات و نحوه استفاده:
@@ -105,9 +124,25 @@ list_order="""
 
 8. **تولید تصویر با هوش مصنوعی**  
    - **توضیحات**: اگر این سرویس را انتخاب کنید، متن خود را ارسال کنید و ربات یک تصویر مرتبط با آن متن تولید خواهد کرد.
+9. ** تبدیل متن به ویس انگلیسی**
 
-    
+10.ترجمه متن ها به فارسی
+11. تشخیص توده بدنی (BMI)
+ودستورات در گروه :
+برای چت با هوش مصوعی  قبل متن /بزارید
+برای ارسال تصویر از هوش مصنوعی اینطوری :
+تصویر انسان
+تبدیل متن به لگو اینطوری :
+lego hi
 """
+
+
+with Client(name='Ai_bot') as client:
+    
+    result = client.send_message(ADMIN_GUID, '**ربات شما استارت شد**')
+    print(result)
+    
+
 bot = Client(name='Ai_bot')
 
 if os.path.exists('users.db'):
@@ -198,6 +233,8 @@ def chatgpt(text):
         return f"Error: {e}"
     except KeyError:
         return "Error: Unexpected response format."
+    
+    
 
 def create_qr_code(url, filename):
     qr = qrcode.make(url)
@@ -324,7 +361,187 @@ def text_to_manavi(text):
             manavi_text += char
     return manavi_text
 
+def calculate_bmi(weight, height):
+    height_in_meters = height / 100
+    bmi = weight / (height_in_meters ** 2)
+    return bmi
 
+# تعیین دسته بندی BMI
+def bmi_category(bmi):
+    if bmi < 18.5:
+        return "کم‌وزن (Underweight)"
+    elif 18.5 <= bmi < 24.9:
+        return "وزن نرمال (Normal weight)"
+    elif 25 <= bmi < 29.9:
+        return "اضافه‌وزن (Overweight)"
+    else:
+        return "چاقی (Obesity)"
+
+# ارائه توصیه‌های بهداشتی
+def get_health_advice(bmi):
+    if bmi < 18.5:
+        return "شما کم‌وزن هستید. توصیه می‌شود رژیم غذایی مناسب داشته باشید و به پزشک مراجعه کنید."
+    elif 18.5 <= bmi < 24.9:
+        return "شما وزن نرمالی دارید. توصیه می‌شود رژیم غذایی سالم داشته باشید و ورزش کنید."
+    elif 25 <= bmi < 29.9:
+        return "شما اضافه‌وزن دارید. توصیه می‌شود رژیم غذایی کم‌چربی داشته باشید و ورزش منظم انجام دهید."
+    else:
+        return "شما چاقی دارید. توصیه می‌شود به پزشک مراجعه کنید و برنامه کاهش وزن را دنبال کنید."
+
+def translate_fa(text):
+    result =GoogleTranslator('auto','fa').translate(text)
+    return f"متن شما ترجمه شد به فارسی:\n{result}"
+
+
+def processing_voice(text, output_file):
+    languages = {
+    "af": "Afrikaans",
+    "ar": "Arabic",
+    "bg": "Bulgarian",
+    "bn": "Bengali",
+    "bs": "Bosnian",
+    "ca": "Catalan",
+    "cs": "Czech",
+    "da": "Danish",
+    "de": "German",
+    "el": "Greek",
+    "en": "English",
+    "es": "Spanish",
+    "et": "Estonian",
+    "fi": "Finnish",
+    "fr": "French",
+    "gu": "Gujarati",
+    "hi": "Hindi",
+    "hr": "Croatian",
+    "hu": "Hungarian",
+    "id": "Indonesian",
+    "is": "Icelandic",
+    "it": "Italian",
+    "iw": "Hebrew",
+    "ja": "Japanese",
+    "jw": "Javanese",
+    "km": "Khmer",
+    "kn": "Kannada",
+    "ko": "Korean",
+    "la": "Latin",
+    "lv": "Latvian",
+    "ml": "Malayalam",
+    "mr": "Marathi",
+    "ms": "Malay",
+    "my": "Myanmar (Burmese)",
+    "ne": "Nepali",
+    "nl": "Dutch",
+    "no": "Norwegian",
+    "pl": "Polish",
+    "pt": "Portuguese",
+    "ro": "Romanian",
+    "ru": "Russian",
+    "si": "Sinhala",
+    "sk": "Slovak",
+    "sq": "Albanian",
+    "sr": "Serbian",
+    "su": "Sundanese",
+    "sv": "Swedish",
+    "sw": "Swahili",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "th": "Thai",
+    "tl": "Filipino",
+    "tr": "Turkish",
+    "uk": "Ukrainian",
+    "ur": "Urdu",
+    "vi": "Vietnamese",
+    "zh-CN": "Chinese (Simplified)",
+    "zh-TW": "Chinese (Mandarin/Taiwan)",
+    "zh": "Chinese (Mandarin)"
+}
+
+    
+       
+        
+        
+   
+    selected_language = random.choice(list(languages.keys()))
+    language_name = languages[selected_language]
+    
+    speech = gTTS(text=text, lang=selected_language, slow=False)
+    speech.save(output_file)
+    
+
+@bot.on_message_updates(filters.is_group)  
+async def chatbot(message:Updates):
+    print(message)
+    if message.text.startswith("/"):
+        await message.reply("منتظرپاسخ باشید")
+        r=chatgpt(message.text.replace("/",""))
+        await message.reply(r)
+
+@bot.on_message_updates(filters.is_group)
+async def lego_ai(message:Updates):
+    if message.text.startswith("lego"):
+        await  message.reply("درحال ساخت لگو")
+        logo_text =message.text.replace("lego","").strip()
+        download_logo_and_save(logo_text)
+        file_name = f"{logo_text}_logo.png"
+        with open(file_name, "rb") as p:
+            await message.reply_photo(str(file_name), caption="این لوگوی متن شماست.")
+
+
+@bot.on_message_updates(filters.is_group)
+async def image_ai(message:Updates):
+    text = message.text.replace("تصویر","")
+    
+    if message.text.startswith("تصویر"):
+        await message.reply("منتطربمانید")
+        r=photo_ai(text,'downloaded_image_ai.jpg')
+        with open('downloaded_image_ai.jpg','rb'):
+            await message.reply_photo('downloaded_image_ai.jpg',caption="تصویر شما اماده شد")
+
+
+     
+
+
+
+
+
+        
+
+@bot.on_message_updates(filters.is_group, filters.Commands(['بن', 'اخراج'], prefixes=''))
+async def ban_user_by_admin(update: Updates):
+    group = update.object_guid
+    try:
+        try:
+            try:
+                try:
+                    if group and update.is_admin(user_guid=update.author_guid):
+                        if update.reply_message_id:
+                            author_guid = update.get_messages(message_ids=update.reply_message_id).messages[0].author_object_guid
+
+                        else:
+                            author_guid = update.client.get_info(username=update.text.split()[-1]).user_guid
+
+                        user = author_guid
+                        if user:
+                        
+                            await update.ban_member(user_guid=user)
+                            update.reply("کاربر  توسط ادمین از گروه حذف شد.")
+                except exceptions.InvalidInput:
+                    await  update.reply("کاربر  ادمینه")
+            except ValueError:
+                await  update.reply("کاربر  ادمینه")
+        except NameError :
+            await update.reply("کاربر  ادمینه")
+    except Exception :
+        await update.reply("کاربر  ادمینه")
+
+
+
+
+
+
+
+
+        
 
 @bot.on_message_updates(filters.Commands(["start"]), filters.is_private)
 async def start_message(update: Updates):
@@ -348,7 +565,20 @@ async def change_service(update: Updates):
 
     if user:
         await reset_user_service(user_id)  # غیرفعال کردن سرویس قبلی
-        await update.reply("لطفا خدماتی که می‌خواهید استفاده کنید را انتخاب کنید:\n1. چت با هوش مصنوعی\n2. تبدیل لینک به کیو آر کد\n3. خدمات خط‌های باستانی\n4. تبدیل متن به لوگو\n5. دریافت تصویر با استفاده از هوش مصنوعی")  # اضافه کردن گزینه 5
+        await update.reply(
+    "ثبت نام شما کامل شد. خوش آمدید!\n"
+    "لطفا خدماتی که می‌خواهید استفاده کنید را انتخاب کنید:\n\n"
+    "1. چت با هوش مصنوعی\n"
+    "2. تبدیل لینک به کیو آر کد\n"
+    "3. خدمات خط‌های باستانی\n"
+    "4. تبدیل متن به لوگو\n"
+    "5. دریافت تصویر با استفاده از هوش مصنوعی\n"
+    "6. تبدیل متن به ویس به زبان‌های مختلف\n"
+    "7. ترجمه متن‌ها به فارسی\n"
+    "8. تشخیص توده بدنی (BMI)"
+)
+
+       
     else:
         await update.reply("لطفا ابتدا دستور /start را ارسال کنید و ثبت نام کنید.")
 
@@ -390,7 +620,20 @@ async def handle_message(update: Updates):
                 await update.reply("لطفا سن خود را به صورت عددی وارد کنید.")
         elif user[5] == '':
             await update_user(user_id, account_number=text)
-            await update.reply("ثبت نام شما کامل شد. خوش آمدید! لطفا خدماتی که می‌خواهید استفاده کنید را انتخاب کنید:\n1. چت با هوش مصنوعی\n2. تبدیل لینک به کیو آر کد\n3. خدمات خط‌های باستانی\n4. تبدیل متن به لوگو\n5. دریافت تصویر با استفاده از هوش مصنوعی")  # اضافه کردن گزینه 5
+            await update.reply(
+            "ثبت نام شما کامل شد. خوش آمدید!\n"
+            "لطفا خدماتی که می‌خواهید استفاده کنید را انتخاب کنید:\n\n"
+            "1. چت با هوش مصنوعی\n"
+            "2. تبدیل لینک به کیو آر کد\n"
+            "3. خدمات خط‌های باستانی\n"
+            "4. تبدیل متن به لوگو\n"
+            "5. دریافت تصویر با استفاده از هوش مصنوعی\n"
+            "6. تبدیل متن به ویس به زبان‌های مختلف\n"
+            "7. ترجمه متن‌ها به فارسی\n"
+            "8. تشخیص توده بدنی (BMI)"
+)
+
+            
         elif user[7] is None:
             if text == '1':
                 await update_user(user_id, selected_service='chat')
@@ -407,8 +650,35 @@ async def handle_message(update: Updates):
             elif text == '5':
                 await update_user(user_id, selected_service='photo_ai')
                 await update.reply("شما خدمت دریافت تصویر با استفاده از هوش مصنوعی را انتخاب کرده‌اید. متن خود را ارسال کنید.")
+            elif text=='6':
+                await update_user(user_id, selected_service='voice')
+                await update.reply("شما خدمت تبدیل متن به ویس انتخاب کردید.:")
+            elif text=='7':
+                await update_user(user_id, selected_service='translate')
+                await update.reply("شما خدمت تبدیل  تمامی متن ها به فارسی انتخاب کردید.")
+            elif text =='8':
+                await update_user(user_id, selected_service='bmi')
+                await update.reply('شما خدمت تشخیص  توده بدنی را انتخاب کردید وبرای استفاده درست از این دستور:\n'
+                                   "وزن:90 قد:190")
+                
+                
+                
+                
             else:
-                await update.reply("لطفا یک گزینه معتبر انتخاب کنید:\n1. چت با هوش مصنوعی\n2. تبدیل لینک به کیو آر کد\n3. خدمات خط‌های باستانی\n4. تبدیل متن به لوگو\n5. دریافت تصویر با استفاده از هوش مصنوعی")
+                await update.reply(
+    "ثبت نام شما کامل شد. خوش آمدید!\n"
+    "لطفا خدماتی که می‌خواهید استفاده کنید را انتخاب کنید:\n\n"
+    "1. چت با هوش مصنوعی\n"
+    "2. تبدیل لینک به کیو آر کد\n"
+    "3. خدمات خط‌های باستانی\n"
+    "4. تبدیل متن به لوگو\n"
+    "5. دریافت تصویر با استفاده از هوش مصنوعی\n"
+    "6. تبدیل متن به ویس به زبان‌های مختلف\n"
+    "7. ترجمه متن‌ها به فارسی\n"
+    "8. تشخیص توده بدنی (BMI)"
+)
+
+               
         else:
             if user[7] == 'chat':
                 await update.reply("منتظر پاسخ ربات باشید")
@@ -441,14 +711,42 @@ async def handle_message(update: Updates):
                         await update.reply_photo("downloaded_image_ai.jpg",caption="تصویر شما اماده شد ")
                 except Exception as im:
                     await update.reply(F"erorr:{im}")
+            elif user[7] == 'voice':
+                await update.reply("درحال ساخت ویس")
+                rs=processing_voice(text,'voice.mp3')
+                with open("voice.mp3",'rb') :
+                    await update.reply_voice("voice.mp3",caption="ویس شما اماده شد")
+            elif user[7] =='translate':
+                r =translate_fa(text)
+                await update.reply("درحال ترجمه متن شما به فارسی")
+            
+                await update.reply(r)
+            elif user[7] =='bmi':
+                await update.reply("درحال محاسبه")
+                if 'وزن:' in text and 'قد:' in text:
+                    parts = text.split(' ')
+                    weight = float(parts[0].split(':')[1])
+                    height = float(parts[1].split(':')[1])
+                    bmi = calculate_bmi(weight, height)
+                    category = bmi_category(bmi)
+                    advice = get_health_advice(bmi)
+
+                    response = (f"BMI شما: {bmi:.2f}\n"
+                                f"وضعیت وزنی: {category}\n"
+                                f"توصیه: {advice}")
+                    
+                    await update.reply(response)
+                                
+                
             else:
                 await update.reply("لطفا ابتدا خدمات مورد نظر خود را انتخاب کنید.")
+                
     else:
         await update.reply("لطفا ابتدا دستور /start را ارسال کنید.")
 
 
 
-@bot.on_message_updates(filters.is_private,filters.Commands(["دستورات"],prefixes=''))
+@bot.on_message_updates(filters.Commands(["دستورات"],prefixes=''))
 async def send_command(update: Updates):
     await update.reaction(2)
     
@@ -461,8 +759,33 @@ async def block_user(update: Updates):
     if contains_prohibited_word(update.text, bad_patterns):
         await update.reply("پیام شما حاوی محتوای غیر اخلاقی است و شما بلاک شدید.")
         await update.block()
+        
+
+
+
+            
+    
+            
+    
+            
+   
+    
 
 bot.run()
+
+
+
+
+
+
+
+
+        
+        
+
+
+
+
 
 
 

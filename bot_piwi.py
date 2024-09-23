@@ -7,7 +7,7 @@ from io import BytesIO
 import shutil
 import re
 from time import strftime
-
+from datetime import datetime
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
@@ -57,9 +57,24 @@ except ImportError :
     from deep_translator import GoogleTranslator
 
 
+try:
+    import phonenumbers
+    from phonenumbers import geocoder, carrier, timezone, PhoneNumberType
+
+except ImportError :
+    install("phonenumbers")
+
+try:
+    import pytz
+except ImportError :
+    install("pytz")
     
     
-ADMIN_GUID = 'u0Guh3f0531236db71d8fd20e938bc5a'  
+
+
+    
+    
+ADMIN_GUID = 'گوید حساب ادمین'  
 # شناسه چت ادمین
 def read_bad_words(file_path):
     with open(file_path, "r", encoding="utf-8") as file:  # تغییر کدگذاری به utf-8
@@ -76,6 +91,10 @@ def create_patterns(words):
         pattern = pattern.replace(r'\*', r'\s*')
         patterns.append(re.compile(r'\b{}\b'.format(pattern), re.IGNORECASE))
     return patterns
+
+
+        
+       
 
 # خواندن کلمات از فایل متنی
 bad_words = read_bad_words("bad_words.txt")
@@ -137,10 +156,7 @@ lego hi
 """
 
 
-with Client(name='Ai_bot') as client:
-    
-    result = client.send_message(ADMIN_GUID, '**ربات شما استارت شد**')
-    print(result)
+
     
 
 bot = Client(name='Ai_bot')
@@ -213,27 +229,19 @@ async def send_info_to_admin(user_id):
 
 def chatgpt(text):
     s = requests.Session()
-    api_urls = [
-        f"http://api-free.ir/api/bard.php?text={text}",
-        f"https://api.chbk.run/chatgpt?text={text}"
-    ]
+    api_url = f"http://api-free.ir/api/bard.php?text={text}"
     
     try:
-        selected_url = random.choice(api_urls)
-        response = s.get(selected_url)
-        response.raise_for_status()  
+        response = s.get(api_url)
+        response.raise_for_status()  # Raises an error for bad responses (4xx and 5xx)
         
-        if 'bard.php' in selected_url:
-            chat = response.json().get("result")
-        else:
-            chat = response.json().get("data")
+        chat = response.json().get("result")
         
         return chat
     except requests.exceptions.RequestException as e:
         return f"Error: {e}"
     except KeyError:
         return "Error: Unexpected response format."
-    
     
 
 def create_qr_code(url, filename):
@@ -760,13 +768,67 @@ async def block_user(update: Updates):
         await update.reply("پیام شما حاوی محتوای غیر اخلاقی است و شما بلاک شدید.")
         await update.block()
         
+@bot.on_message_updates(filters.is_group)
+async def delete_message(update: Updates):
+    if contains_prohibited_word(update.text, bad_patterns):
+        a=await update.delete_messages()
+        print(f"text :\n{update.text}\ndeleted:\n {a} ")
+        
+        await update.reply("پیام شما حاوی محتوای غیر اخلاقی است و پیام شما پاک شد ")
+    elif any(update.text.startswith(emoji) for emoji in ['🍆', '🌈', '🏳️‍🌈', '💧', '🍌', '🍑']):
+        a = await update.delete_messages()
 
-
-
-            
+        
+        
+        
     
-            
+
+
+        
     
+        
+@bot.on_message_updates(filters.is_group, filters.Commands(['بن', 'اخراج'], prefixes=''))
+async def ban_user_by_admin(update: Updates):
+    group = update.object_guid
+    try:
+        try:
+            try:
+                try:
+                    if group and update.is_admin(user_guid=update.author_guid):
+                        if update.reply_message_id:
+                            author_guid = update.get_messages(message_ids=update.reply_message_id).messages[0].author_object_guid
+
+                        else:
+                            author_guid = update.client.get_info(username=update.text.split()[-1]).user_guid
+
+                        user = author_guid
+                        if user:
+                        
+                            await update.ban_member(user_guid=user)
+                            await update.reply("کاربر  توسط ادمین از گروه حذف شد.")
+                except exceptions.InvalidInput:
+                   await update.reply("کاربر  ادمینه")
+            except ValueError:
+                await update.reply("کاربر  ادمینه")
+        except NameError :
+            await update.reply("کاربر  ادمینه")
+    except Exception :
+        await update.reply("کاربر  ادمینه")
+        
+        
+        
+
+
+
+        
+    
+
+
+        
+                
+        
+        
+               
             
    
     
@@ -782,6 +844,11 @@ bot.run()
 
         
         
+
+
+
+
+
 
 
 
